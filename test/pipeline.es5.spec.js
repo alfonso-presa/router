@@ -29,7 +29,7 @@ describe('$pipeline', function () {
 
       $provide.value('myCustomStep', function (instruction) {
         return instruction.router.traverseInstruction(instruction, function (instruction) {
-          return instruction.locals.custom = 'hello!'
+          return (instruction.locals.custom = 'hello!');
         });
       });
     });
@@ -56,6 +56,46 @@ describe('$pipeline', function () {
     $rootScope.$digest();
 
     expect(elt.text()).toBe('hello!');
+  });
+
+  it('should load controller resolve dependencies', function (done) {
+    var $q;
+    inject(function(_$compile_, _$rootScope_, _$router_, _$templateCache_, _$q_) {
+      $compile = _$compile_;
+      $rootScope = _$rootScope_;
+      $router = _$router_;
+      $templateCache = _$templateCache_;
+      $q = _$q_;
+    });
+
+    put('one', '<div>{{one.custom}}</div>');
+    function OneController(promised) {
+      expect(promised).toBe('expected');
+      done();
+    }
+    OneController.$resolve = {
+      promised: function () {
+        return $q(function(resolve) {
+          setTimeout(function () {
+            $rootScope.$apply(
+              function () {resolve('expected');}
+            );
+          },0);
+        });
+      }
+    };
+
+    $controllerProvider.register('OneController', OneController);
+
+    $router.config([
+      { path: '/', component: 'one' }
+    ]);
+
+    compile('<ng-outlet></ng-outlet>');
+
+    $router.navigate('/');
+    $rootScope.$digest();
+
   });
 
   function put (name, template) {

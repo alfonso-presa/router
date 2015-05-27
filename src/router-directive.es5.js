@@ -379,8 +379,9 @@ function setupRoutersStepFactory() {
 /*
  * $initLocalsStep
  */
-function initLocalsStepFactory($componentMapper, $controllerIntrospector) {
+function initLocalsStepFactory($componentMapper, $controllerIntrospector, $q, $injector) {
   return function initLocals(instruction) {
+
     return instruction.router.traverseInstruction(instruction, function(instruction) {
       if (typeof instruction.component === 'function') {
         instruction.controllerConstructor = instruction.component;
@@ -392,10 +393,26 @@ function initLocalsStepFactory($componentMapper, $controllerIntrospector) {
           instruction.controllerConstructor = $controllerIntrospector.getTypeByName(controllerName) || NOOP_CONTROLLER;
         }
       }
-      return instruction.locals = {
+      instruction.locals = {
         $router: instruction.router,
         $routeParams: (instruction.params || {})
       };
+      var promises = [];
+      if(instruction.controllerConstructor.$resolve) {
+        angular.forEach(instruction.controllerConstructor.$resolve, function(value, key) {
+          var promise = angular.isString(value) ? $injector.get(value) : $injector.invoke(value, null, null, key);
+          if (promise.then) {
+            promise.then(function (value) {
+              instruction.locals[key] = value;
+            });
+            promises.push(promise);
+          }
+          else {
+            instruction.locals[key] = promise;
+          }
+        });
+      };
+      return $q.all(promises);
     });
   }
 }
