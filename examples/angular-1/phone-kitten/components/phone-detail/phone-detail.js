@@ -10,5 +10,9 @@ PhoneDetailController.$resolve = {
 	}]
 };
 
+PhoneDetailController.prototype.setImage = function(imageUrl) {
+  this.mainImageUrl = imageUrl;
+};
+
 angular.module('phoneKitten.phoneDetail', []).
     controller('PhoneDetailController', ['phone', PhoneDetailController]);
