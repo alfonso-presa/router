@@ -18,7 +18,7 @@ describe('angular 1.x "Confirm Unsaved" App', function() {
     it('should link items', function() {
       var items = element.all(by.binding('item.title'));
       var first = items.get(0);
-      expect(first.getAttribute('href')).toBe('http://0.0.0.0:8000/examples/angular-1/confirm-unsaved/post/1');
+      expect(first.getAttribute('href')).toMatch(/\/examples\/angular-1\/confirm-unsaved\/post\/1$/);
 
       first.click();
       browser.getLocationAbsUrl().then(function(url) {
