@@ -397,24 +397,26 @@ function initLocalsStepFactory($componentMapper, $controllerIntrospector, $q, $i
         $router: instruction.router,
         $routeParams: (instruction.params || {})
       };
+
+      var $resolve = angular.isArray(instruction.controllerConstructor) ?
+        instruction.controllerConstructor[instruction.controllerConstructor.length-1].$resolve :
+        instruction.controllerConstructor.$resolve;
+
       var promises = [];
-      if(instruction.controllerConstructor.$resolve) {
-        angular.forEach(instruction.controllerConstructor.$resolve, function(value, key) {
-          var promise = angular.isString(value) ? $injector.get(value) : $injector.invoke(value, null, null, key);
-          if (promise.then) {
-            promise.then(function (value) {
-              instruction.locals[key] = value;
-            });
-            promises.push(promise);
-          }
-          else {
-            instruction.locals[key] = promise;
-          }
+      angular.forEach($resolve, function (value, key) {
+        var promise = $q.when(
+          angular.isString(value) ?
+            $injector.get(value) :
+            $injector.invoke(value, null, instruction.locals, key)
+        );
+        promise.then(function (value) {
+            instruction.locals[key] = value;
         });
-      };
+        promises.push(promise);
+      });
       return $q.all(promises);
     });
-  }
+  };
 }
 
 
