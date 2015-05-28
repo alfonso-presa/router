@@ -66,8 +66,8 @@ class Router {
    * @description Navigate to a URL.
    * Returns the cannonical URL for the route navigated to.
    */
-  navigate(url) {
-    if (this.navigating) {
+  navigate(url, force) {
+    if (this.navigating || (this.currentUrl() === '.' + url && !force)) {
       return Promise.resolve();
     }
 
@@ -156,12 +156,13 @@ class Router {
     return mapObjAsync(this.outlets, fn);
   }
 
+  currentUrl() {
+    return this.previousUrl || this.lastNavigationAttempt;
+  }
 
   recognize(url) {
     return this.registry.recognize(url);
   }
-
-
 
   /**
    * @description Navigates to either the last URL successfully naviagted to,
@@ -169,7 +170,7 @@ class Router {
    * You shouldn't need to use this API very often.
    */
   renavigate() {
-    var renavigateDestination = this.previousUrl || this.lastNavigationAttempt;
+    var renavigateDestination = this.currentUrl();
     if (!this.navigating && renavigateDestination) {
       return this.navigate(renavigateDestination);
     } else {
